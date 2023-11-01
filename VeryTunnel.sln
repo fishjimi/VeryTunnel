@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34221.43
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VeryTunnel.Core", "VeryTunnel.Core\VeryTunnel.Core.csproj", "{68F033AD-6EBB-45B6-A4A7-B10E0E8F2E76}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VeryTunnel.Server", "VeryTunnel.Server\VeryTunnel.Server.csproj", "{D0C4158C-A659-43EC-B6B8-68C908CFB118}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{68F033AD-6EBB-45B6-A4A7-B10E0E8F2E76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68F033AD-6EBB-45B6-A4A7-B10E0E8F2E76}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68F033AD-6EBB-45B6-A4A7-B10E0E8F2E76}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68F033AD-6EBB-45B6-A4A7-B10E0E8F2E76}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0C4158C-A659-43EC-B6B8-68C908CFB118}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0C4158C-A659-43EC-B6B8-68C908CFB118}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0C4158C-A659-43EC-B6B8-68C908CFB118}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0C4158C-A659-43EC-B6B8-68C908CFB118}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C1ACD29E-11A0-4110-B423-B3C1FE1B664C}
+	EndGlobalSection
+EndGlobal

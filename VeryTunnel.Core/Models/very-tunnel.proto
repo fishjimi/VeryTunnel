@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option csharp_namespace = "VeryTunnel.Core.Models";
+
+message WrappedMessage {
+    uint32 requestId = 1;
+    oneof inner_message {
+        DeviceConnect device_connect = 11;
+        HeartBeat heatbeat = 12;
+        TunnelPackage tunnel_package = 101;
+    }
+}
+
+message HeartBeat{
+}
+
+message DeviceConnect{
+    string id = 1;
+    string user_context = 2;
+}
+
+
+message TunnelPackage{
+    uint32 session_id = 1;
+    bytes data = 2;
+}
