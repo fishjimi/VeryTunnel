@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace VeryTunnel.Contracts;
 
-namespace VeryTunnel.Contracts
+public interface IAgent
 {
-    public interface IAgent
-    {
-        string AgentId { get; }
-    }
+    public string Id { get; }
+    public Task<ITunnel> CreateTunnel(int agentPort, int serverPort, Func<ITunnel, ITunnelSession, Task> OnSessionCreated = null);
 }

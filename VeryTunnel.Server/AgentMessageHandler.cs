@@ -8,13 +8,13 @@ namespace VeryTunnel.Server;
 internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>, IAgent
 {
     private string _agentId = string.Empty;
-    public string AgentId => _agentId;
+    public string Id => _agentId;
 
 
-    private readonly AgentManager _agentManager;
+    private readonly DefaultAgentManager _agentManager;
 
 
-    public AgentMessageHandler(AgentManager agentManager)
+    public AgentMessageHandler(DefaultAgentManager agentManager)
     {
         _agentManager = agentManager;
     }
