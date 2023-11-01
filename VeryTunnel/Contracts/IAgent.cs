@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace VeryTunnel.Core.Contracts
+namespace VeryTunnel.Contracts
 {
     public interface IAgent
     {

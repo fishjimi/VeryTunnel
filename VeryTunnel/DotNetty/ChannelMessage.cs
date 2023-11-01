@@ -1,6 +1,6 @@
 ﻿using Google.Protobuf;
 
-namespace VeryTunnel.Core.DotNetty
+namespace VeryTunnel.DotNetty
 {
     public class ChannelMessage
     {

@@ -4,7 +4,7 @@ using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
 using Microsoft.Extensions.Logging;
-using VeryTunnel.Core.DotNetty;
+using VeryTunnel.DotNetty;
 
 namespace VeryTunnel.Server;
 

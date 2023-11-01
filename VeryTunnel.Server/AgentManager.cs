@@ -1,5 +1,5 @@
 ﻿using System.Collections.Concurrent;
-using VeryTunnel.Core.Contracts;
+using VeryTunnel.Contracts;
 
 namespace VeryTunnel.Server;
 

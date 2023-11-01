@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option csharp_namespace = "VeryTunnel.Core.Models";
+option csharp_namespace = "VeryTunnel.Models";
 
 message WrappedMessage {
     uint32 requestId = 1;

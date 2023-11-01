@@ -1,7 +1,7 @@
 ﻿using DotNetty.Transport.Channels;
-using VeryTunnel.Core.Contracts;
-using VeryTunnel.Core.DotNetty;
-using VeryTunnel.Core.Models;
+using VeryTunnel.Contracts;
+using VeryTunnel.DotNetty;
+using VeryTunnel.Models;
 
 namespace VeryTunnel.Server;
 

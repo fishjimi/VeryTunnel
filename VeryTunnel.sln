@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34221.43
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VeryTunnel.Core", "VeryTunnel.Core\VeryTunnel.Core.csproj", "{68F033AD-6EBB-45B6-A4A7-B10E0E8F2E76}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VeryTunnel", "VeryTunnel\VeryTunnel.csproj", "{68F033AD-6EBB-45B6-A4A7-B10E0E8F2E76}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VeryTunnel.Server", "VeryTunnel.Server\VeryTunnel.Server.csproj", "{D0C4158C-A659-43EC-B6B8-68C908CFB118}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VeryTunnel.Server", "VeryTunnel.Server\VeryTunnel.Server.csproj", "{D0C4158C-A659-43EC-B6B8-68C908CFB118}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

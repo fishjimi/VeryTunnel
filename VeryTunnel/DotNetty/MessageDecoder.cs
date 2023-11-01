@@ -4,9 +4,9 @@ using DotNetty.Transport.Channels;
 using Google.Protobuf;
 using System.Buffers;
 using System.Linq.Expressions;
-using VeryTunnel.Core.Models;
+using VeryTunnel.Models;
 
-namespace VeryTunnel.Core.DotNetty;
+namespace VeryTunnel.DotNetty;
 public class MessageDecoder : ByteToMessageDecoder
 {
     public static Func<WrappedMessage, IMessage> GetInnerMessage => getInnerMessage.Value;
