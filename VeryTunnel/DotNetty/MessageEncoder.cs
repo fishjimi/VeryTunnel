@@ -31,7 +31,8 @@ namespace VeryTunnel.DotNetty
         {
             var wrappedMessage = new WrappedMessage()
             {
-                RequestId = channelMessage.RequestId
+                RequestId = channelMessage.RequestId,
+                ResponseId = channelMessage.ResponseId
             };
             SetInnerMessage(wrappedMessage, channelMessage.Message);
             byte[] bytes = ArrayPool<byte>.Shared.Rent(wrappedMessage.CalculateSize());

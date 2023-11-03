@@ -4,9 +4,11 @@ option csharp_namespace = "VeryTunnel.Models";
 
 message WrappedMessage {
     uint32 requestId = 1;
+    uint32 responseId = 2;
     oneof inner_message {
         DeviceConnect device_connect = 11;
         HeartBeat heatbeat = 12;
+        OperateTunnel create_tunnel = 13;
         TunnelPackage tunnel_package = 101;
     }
 }
@@ -19,6 +21,15 @@ message DeviceConnect{
     string user_context = 2;
 }
 
+message OperateTunnel{
+    int32 agent_port = 1;
+    int32 server_port = 2;
+    enum Command {
+        create = 0;
+        destory = 1;
+    }
+    Command command = 3;
+}
 
 message TunnelPackage{
     uint32 session_id = 1;

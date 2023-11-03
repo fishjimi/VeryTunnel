@@ -1,0 +1,62 @@
+﻿@page "/"
+@inject ITunnelServer tunnelServer
+
+<PageTitle>Counter</PageTitle>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Agent</th>
+            <th></th>
+            <th>Operations</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var agent in tunnelServer.Agents)
+        {
+            <tr @key="agent.Id">
+                <td>@agent.Id</td>
+                <td></td>
+                <td>
+                    <button class="btn btn-primary" @onclick="()=> agent.CreateTunnel(80,0)">Create New Tunnel</button>
+                </td>
+            </tr>
+            if (true)
+            {
+                var key = $"{agent.Id}-tunnels";
+                <tr @key="key">
+                    <td colspan="3">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>AgentPort</th>
+                                    <th>ServerPort</th>
+                                    <th>Operations</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var tunnel in agent.Tunnels)
+                                {
+                                    <tr>
+                                        <td>@tunnel.AgentPort</td>
+                                        <td>@tunnel.ServerPort</td>
+                                        <td>
+                                            <button class="btn btn-danger" @onclick="tunnel.Close">Close</button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@code {
+
+    private void CreateNewTunnel()
+    {
+    }
+}

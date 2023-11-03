@@ -15,10 +15,11 @@ public class VeryTunnelServer : ITunnelServer
     private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger<VeryTunnelServer> _logger;
 
-    //private IChannel boundChannel;
-    //private readonly MultithreadEventLoopGroup bossGroup = new(1);
-    //private readonly MultithreadEventLoopGroup workerGroup = new();
-    //private readonly ServerBootstrap bootstrap = new();
+
+    private IChannel boundChannel;
+    private MultithreadEventLoopGroup bossGroup;
+    private MultithreadEventLoopGroup workerGroup;
+    private ServerBootstrap bootstrap;
 
 
     public VeryTunnelServer(IAgentManager agentManager, ILoggerFactory loggerFactory)
@@ -26,43 +27,51 @@ public class VeryTunnelServer : ITunnelServer
         _agentManager = agentManager;
         _loggerFactory = loggerFactory;
         _logger = _loggerFactory.CreateLogger<VeryTunnelServer>();
+        InternalLoggerFactory.DefaultFactory = _loggerFactory;
     }
 
     public event Func<IAgent, Task> OnAgentConnected;
-    public bool TryGet(string Id, out IAgent agent) => _agentManager.TryGet(Id, out agent);
-
-    public async Task Start()
+    private Task TrigerOnAgentConnected(IAgent agent)
     {
-        _logger.LogInformation("TunnelServer S");
+        return OnAgentConnected?.Invoke(agent) ?? Task.CompletedTask; ;
+    }
+    public bool TryGet(string Id, out IAgent agent) => _agentManager.TryGet(Id, out agent);
+    public IList<IAgent> Agents => throw new NotImplementedException();
 
+    public async Task StartAsync()
+    {
+        bossGroup = new MultithreadEventLoopGroup(1);
+        workerGroup = new MultithreadEventLoopGroup();
+        bootstrap = new ServerBootstrap();
+        bootstrap
+            .Group(bossGroup, workerGroup)
+            .Channel<TcpServerSocketChannel>()
+            .ChildOption(ChannelOption.TcpNodelay, true)
+            .ChildOption(ChannelOption.SoKeepalive, true)
+            .ChildOption(ChannelOption.SoReuseaddr, true)
+            .Option(ChannelOption.SoReuseport, true)
+            .Option(ChannelOption.SoBacklog, 1000)
+            //.Handler(new LoggingHandler("SRV-LSTN", LogLevel.INFO))
+            .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
+            {
+                channel.Pipeline.AddLast(new ProtobufVarint32FrameDecoder());
+                channel.Pipeline.AddLast(new ProtobufVarint32LengthFieldPrepender());
+                channel.Pipeline.AddLast(new MessageDecoder());
+                channel.Pipeline.AddLast(new MessageEncoder());
+                channel.Pipeline.AddLast(new HeartBeatReadIdleHandler(40));
+                channel.Pipeline.AddLast(new AgentMessageHandler(_agentManager, TrigerOnAgentConnected));
+            }));
+        boundChannel = await bootstrap.BindAsync(2000);
+        _logger.LogInformation("TunnelServer started");
+    }
 
-        //InternalLoggerFactory.DefaultFactory.AddProvider(_loggerProvider);
-        //bossGroup = new MultithreadEventLoopGroup(1);
-        //workerGroup = new MultithreadEventLoopGroup();
-        //bootstrap = new ServerBootstrap();
-
-        //bootstrap
-        //    .Group(bossGroup, workerGroup)
-        //    .Channel<TcpServerSocketChannel>()
-        //    .ChildOption(ChannelOption.TcpNodelay, true)
-        //    .ChildOption(ChannelOption.SoKeepalive, true)
-        //    .ChildOption(ChannelOption.SoReuseaddr, true)
-        //    .Option(ChannelOption.SoReuseport, true)
-        //    .Option(ChannelOption.SoBacklog, 1000)
-        //    //.Handler(new LoggingHandler("SRV-LSTN", LogLevel.INFO))
-        //    .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
-        //    {
-        //        //var scope = _services.CreateScope();
-        //        //channel.CloseCompletion.ContinueWith(_ => scope.Dispose());
-        //        channel.Pipeline.AddLast(new ProtobufVarint32FrameDecoder());
-        //        channel.Pipeline.AddLast(new ProtobufVarint32LengthFieldPrepender());
-        //        channel.Pipeline.AddLast(new MessageDecoder());
-        //        channel.Pipeline.AddLast(new MessageEncoder());
-        //        channel.Pipeline.AddLast(new HeartBeatReadIdleHandler(40));
-        //        channel.Pipeline.AddLast(new AgentMessageHandler(_agentManager));
-        //    }));
-        //boundChannel = await bootstrap.BindAsync(2000);
-        //_logger.LogInformation("DotNetty Server started");
+    public async Task StopAsync()
+    {
+        await boundChannel.CloseAsync();
+        await Task.WhenAll(
+            bossGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)),
+            workerGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)));
+        _logger.LogInformation("TunnelServer stopped");
     }
 
 }

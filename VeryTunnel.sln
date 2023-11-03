@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VeryTunnel.Server", "VeryTu
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{55B372AF-EF11-46B7-AAE4-167BF3ECB6BA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VeryTunnel.Http.Server", "Samples\VeryTunnel.Http.Server\VeryTunnel.Http.Server.csproj", "{07EBD98B-3AC4-4B7E-9325-01044C3EEF19}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VeryTunnel.Http.Server", "Samples\VeryTunnel.Http.Server\VeryTunnel.Http.Server.csproj", "{D4232998-C7B2-4A61-A715-12659CFB4589}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,16 +25,16 @@ Global
 		{D0C4158C-A659-43EC-B6B8-68C908CFB118}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D0C4158C-A659-43EC-B6B8-68C908CFB118}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D0C4158C-A659-43EC-B6B8-68C908CFB118}.Release|Any CPU.Build.0 = Release|Any CPU
-		{07EBD98B-3AC4-4B7E-9325-01044C3EEF19}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{07EBD98B-3AC4-4B7E-9325-01044C3EEF19}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{07EBD98B-3AC4-4B7E-9325-01044C3EEF19}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{07EBD98B-3AC4-4B7E-9325-01044C3EEF19}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4232998-C7B2-4A61-A715-12659CFB4589}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4232998-C7B2-4A61-A715-12659CFB4589}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4232998-C7B2-4A61-A715-12659CFB4589}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4232998-C7B2-4A61-A715-12659CFB4589}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{07EBD98B-3AC4-4B7E-9325-01044C3EEF19} = {55B372AF-EF11-46B7-AAE4-167BF3ECB6BA}
+		{D4232998-C7B2-4A61-A715-12659CFB4589} = {55B372AF-EF11-46B7-AAE4-167BF3ECB6BA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C1ACD29E-11A0-4110-B423-B3C1FE1B664C}

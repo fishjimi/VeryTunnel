@@ -29,6 +29,7 @@ public class MessageDecoder : ByteToMessageDecoder
         var channelMessage = new ChannelMessage
         {
             RequestId = wrappedMessage.RequestId,
+            ResponseId = wrappedMessage.ResponseId,
             Message = GetInnerMessage(wrappedMessage),
         };
         output.Add(channelMessage);

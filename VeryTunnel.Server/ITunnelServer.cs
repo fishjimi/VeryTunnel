@@ -4,7 +4,9 @@ namespace VeryTunnel.Server;
 
 public interface ITunnelServer
 {
-    public Task Start();
-    public bool TryGet(string Id, out IAgent agent);
+    public Task StartAsync();
+    public Task StopAsync();
     public event Func<IAgent, Task> OnAgentConnected;
+    public bool TryGet(string Id, out IAgent agent);
+    public IList<IAgent> Agents { get; }
 }

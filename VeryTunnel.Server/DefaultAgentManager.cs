@@ -7,21 +7,19 @@ internal class DefaultAgentManager : IAgentManager
 {
     private readonly ConcurrentDictionary<string, IAgent> _agents = new();
 
-    void IAgentManager.Add(IAgent agent)
+    public void Add(IAgent agent)
     {
         _agents.AddOrUpdate(agent.Id, agent, (agentId, oldAgent) => agent);
     }
 
-    void IAgentManager.Remove(string agentId)
+    public void Remove(string agentId)
     {
-        if (_agents.Remove(agentId, out var agent))
-        {
-
-        }
+        _agents.Remove(agentId, out _);
     }
 
-    bool IAgentManager.TryGet(string Id, out IAgent agent)
+    public bool TryGet(string Id, out IAgent agent)
     {
         return _agents.TryGetValue(Id, out agent);
     }
+
 }
