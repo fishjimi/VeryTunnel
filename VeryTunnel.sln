@@ -9,7 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VeryTunnel.Server", "VeryTu
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{55B372AF-EF11-46B7-AAE4-167BF3ECB6BA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VeryTunnel.Http.Server", "Samples\VeryTunnel.Http.Server\VeryTunnel.Http.Server.csproj", "{D4232998-C7B2-4A61-A715-12659CFB4589}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VeryTunnel.Http.Server", "Samples\VeryTunnel.Http.Server\VeryTunnel.Http.Server.csproj", "{D4232998-C7B2-4A61-A715-12659CFB4589}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VeryTunnel.Client", "VeryTunnel.Client\VeryTunnel.Client.csproj", "{ACE158C3-2443-47BE-B23D-3A4070FD2B81}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VeryTunnel.Client.Sample", "Samples\VeryTunnel.Client.Sample\VeryTunnel.Client.Sample.csproj", "{D6007FD5-CEA7-4466-BE8A-FD95477DB4E4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,12 +33,21 @@ Global
 		{D4232998-C7B2-4A61-A715-12659CFB4589}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D4232998-C7B2-4A61-A715-12659CFB4589}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D4232998-C7B2-4A61-A715-12659CFB4589}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ACE158C3-2443-47BE-B23D-3A4070FD2B81}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACE158C3-2443-47BE-B23D-3A4070FD2B81}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACE158C3-2443-47BE-B23D-3A4070FD2B81}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACE158C3-2443-47BE-B23D-3A4070FD2B81}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6007FD5-CEA7-4466-BE8A-FD95477DB4E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6007FD5-CEA7-4466-BE8A-FD95477DB4E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6007FD5-CEA7-4466-BE8A-FD95477DB4E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6007FD5-CEA7-4466-BE8A-FD95477DB4E4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{D4232998-C7B2-4A61-A715-12659CFB4589} = {55B372AF-EF11-46B7-AAE4-167BF3ECB6BA}
+		{D6007FD5-CEA7-4466-BE8A-FD95477DB4E4} = {55B372AF-EF11-46B7-AAE4-167BF3ECB6BA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C1ACD29E-11A0-4110-B423-B3C1FE1B664C}

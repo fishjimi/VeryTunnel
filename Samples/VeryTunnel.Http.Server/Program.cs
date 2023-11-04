@@ -1,13 +1,12 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using VeryTunnel.Http.Server.Data;
+using VeryTunnel.Http.Server;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-builder.Services.AddSingleton<WeatherForecastService>();
+builder.Services.AddVeryTunnelServer();
+builder.Services.AddHostedService<VeryTunnelBackgroundService>();
 
 var app = builder.Build();
 

@@ -8,7 +8,7 @@ message WrappedMessage {
     oneof inner_message {
         DeviceConnect device_connect = 11;
         HeartBeat heatbeat = 12;
-        OperateTunnel create_tunnel = 13;
+        OperateTunnelSession create_tunnel = 13;
         TunnelPackage tunnel_package = 101;
     }
 }
@@ -21,17 +21,20 @@ message DeviceConnect{
     string user_context = 2;
 }
 
-message OperateTunnel{
+message OperateTunnelSession{
     int32 agent_port = 1;
     int32 server_port = 2;
+    uint32 session_id = 3;
     enum Command {
         create = 0;
-        destory = 1;
+        close = 1;
     }
-    Command command = 3;
+    Command command = 4;
 }
 
 message TunnelPackage{
-    uint32 session_id = 1;
-    bytes data = 2;
+    int32 agent_port = 1;
+    int32 server_port = 2;
+    uint32 session_id = 3;
+    bytes data = 4;
 }

@@ -1,6 +1,7 @@
 ﻿using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
+using System.Collections.Concurrent;
 using System.Net;
 using VeryTunnel.Contracts;
 
@@ -10,24 +11,46 @@ internal class Tunnel : ITunnel
 {
     private readonly int _agentPort;
     private int _serverPort;
-    private readonly Func<Task> _onClose;
+    private readonly AgentMessageHandler _agent;
 
     private IChannel boundChannel;
     private MultithreadEventLoopGroup bossGroup;
     private MultithreadEventLoopGroup workerGroup;
     private ServerBootstrap bootstrap;
 
-    public Tunnel(int agentPort, int serverPort, Func<Task> onClose)
+    public Tunnel(int agentPort, int serverPort, AgentMessageHandler agent)
     {
         _agentPort = agentPort;
         _serverPort = serverPort;
-        _onClose = onClose;
+        _agent = agent;
     }
 
     public int AgentPort => _agentPort;
     public int ServerPort => _serverPort;
 
-    public IList<ITunnelSession> Sessions => throw new NotImplementedException();
+    private ConcurrentDictionary<uint, TunnelSession> _sessions = new();
+    public IEnumerable<ITunnelSession> Sessions => _sessions.Values;
+
+    private uint _sessionId;
+    private uint NextSessionId => Interlocked.Increment(ref _sessionId);
+
+
+    internal async Task OnSessionCreated(uint sessionId)
+    {
+        await _agent.OnTunnelSessionCreated(_agentPort, _serverPort, sessionId);
+    }
+    internal async Task OnSessionBytesReceived(uint sessionId, byte[] bytes)
+    {
+        await _agent.OnTunnelSessionBytesReceived(_agentPort, _serverPort, sessionId, bytes);
+    }
+
+    internal async Task WriteBytesToSession(uint sessionId, byte[] bytes)
+    {
+        if (_sessions.TryGetValue(sessionId, out var session))
+        {
+            await session.WriteBytes(bytes);
+        }
+    }
 
     internal async Task<int> StartTunnel()
     {
@@ -35,26 +58,50 @@ internal class Tunnel : ITunnel
         workerGroup = new MultithreadEventLoopGroup();
         bootstrap = new ServerBootstrap();
         bootstrap
-            .Group(bossGroup, workerGroup)
-            .Channel<TcpServerSocketChannel>()
-            .ChildOption(ChannelOption.TcpNodelay, true)
-            .ChildOption(ChannelOption.SoKeepalive, true)
-            .ChildOption(ChannelOption.SoReuseaddr, true)
-            .Option(ChannelOption.SoReuseport, true)
-            .Option(ChannelOption.SoBacklog, 1000)
-            //.Handler(new LoggingHandler("SRV-LSTN", LogLevel.INFO))
-            .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
-            {
-                channel.Pipeline.AddLast(new AgentMessageHandler(_agentManager, TrigerOnAgentConnected));
-            }));
+           .Group(bossGroup, workerGroup)
+           .Channel<TcpServerSocketChannel>()
+           .ChildOption(ChannelOption.TcpNodelay, true)
+           .ChildOption(ChannelOption.SoKeepalive, true)
+           .ChildOption(ChannelOption.SoReuseaddr, true)
+           .Option(ChannelOption.SoReuseport, true)
+           .Option(ChannelOption.SoBacklog, 1000)
+           //.Handler(new LoggingHandler("SRV-LSTN", LogLevel.INFO))
+           .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
+           {
+               var sessionId = NextSessionId;
+               var session = new TunnelSession(sessionId, this);
+               channel.Pipeline.AddLast(session);
+               if (_sessions.TryAdd(sessionId, session))
+               {
+                   channel.CloseCompletion.ContinueWith(async t =>
+                   {
+                       _sessions.TryRemove(sessionId, out _);
+                       await _agent.OnTunnelSessionClose(_agentPort, _serverPort, sessionId);
+                   });
+               }
+           }));
         boundChannel = await bootstrap.BindAsync(_serverPort);
+        _ = boundChannel.CloseCompletion.ContinueWith(_ => CloseAllSessions());
         //_logger.LogInformation("TunnelServer started");
         _serverPort = (boundChannel.LocalAddress as IPEndPoint).Port;
         return _serverPort;
     }
 
-    public Task Close()
+    public async Task Close()
     {
-        return _onClose();
+        //CloseCompletion 如果耗时，下面这句话会很快结束吗?
+        await (boundChannel?.CloseAsync() ?? Task.CompletedTask);
+        await Task.WhenAll(
+            bossGroup?.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)) ?? Task.CompletedTask,
+            workerGroup?.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)) ?? Task.CompletedTask);
+        //_logger.LogInformation("TunnelServer stopped");
+    }
+
+    private async Task CloseAllSessions()
+    {
+        foreach (var session in _sessions)
+        {
+            await session.Value.Close();
+        }
     }
 }

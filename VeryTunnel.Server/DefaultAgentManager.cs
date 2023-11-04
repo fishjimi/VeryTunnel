@@ -21,5 +21,6 @@ internal class DefaultAgentManager : IAgentManager
     {
         return _agents.TryGetValue(Id, out agent);
     }
+    public IEnumerable<IAgent> Agents => _agents.Values;
 
 }

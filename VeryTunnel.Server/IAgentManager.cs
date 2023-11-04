@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using VeryTunnel.Contracts;
+﻿using VeryTunnel.Contracts;
 
 namespace VeryTunnel.Server
 {
@@ -12,5 +7,6 @@ namespace VeryTunnel.Server
         public void Add(IAgent agent);
         public void Remove(string agentId);
         public bool TryGet(string Id, out IAgent agent);
+        public IEnumerable<IAgent> Agents { get; }
     }
 }

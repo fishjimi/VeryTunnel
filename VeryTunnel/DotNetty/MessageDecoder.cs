@@ -1,14 +1,16 @@
 ﻿using DotNetty.Buffers;
 using DotNetty.Codecs;
+using DotNetty.Common.Internal.Logging;
 using DotNetty.Transport.Channels;
 using Google.Protobuf;
-using System.Buffers;
+using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 using VeryTunnel.Models;
 
 namespace VeryTunnel.DotNetty;
 public class MessageDecoder : ByteToMessageDecoder
 {
+    private readonly ILogger<MessageDecoder> _logger = InternalLoggerFactory.DefaultFactory.CreateLogger<MessageDecoder>();
     public static Func<WrappedMessage, IMessage> GetInnerMessage => getInnerMessage.Value;
     private static readonly Lazy<Func<WrappedMessage, IMessage>> getInnerMessage = new(() =>
     {
@@ -23,7 +25,9 @@ public class MessageDecoder : ByteToMessageDecoder
 
     protected override void Decode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
     {
-        byte[] bytes = ArrayPool<byte>.Shared.Rent(input.ReadableBytes);
+        _logger.LogInformation(ByteBufferUtil.PrettyHexDump(input));
+
+        byte[] bytes = new byte[input.ReadableBytes];
         input.ReadBytes(bytes);
         var wrappedMessage = WrappedMessage.Parser.ParseFrom(bytes);
         var channelMessage = new ChannelMessage
@@ -33,7 +37,6 @@ public class MessageDecoder : ByteToMessageDecoder
             Message = GetInnerMessage(wrappedMessage),
         };
         output.Add(channelMessage);
-        ArrayPool<byte>.Shared.Return(bytes);
     }
 
 }

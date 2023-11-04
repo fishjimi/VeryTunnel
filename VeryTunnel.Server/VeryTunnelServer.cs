@@ -1,18 +1,19 @@
 ﻿using DotNetty.Codecs.Protobuf;
 using DotNetty.Common.Internal.Logging;
+using DotNetty.Handlers.Logging;
 using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
 using Microsoft.Extensions.Logging;
 using VeryTunnel.Contracts;
 using VeryTunnel.DotNetty;
+using LogLevel = DotNetty.Handlers.Logging.LogLevel;
 
 namespace VeryTunnel.Server;
 
 public class VeryTunnelServer : ITunnelServer
 {
     private readonly IAgentManager _agentManager;
-    private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger<VeryTunnelServer> _logger;
 
 
@@ -25,9 +26,8 @@ public class VeryTunnelServer : ITunnelServer
     public VeryTunnelServer(IAgentManager agentManager, ILoggerFactory loggerFactory)
     {
         _agentManager = agentManager;
-        _loggerFactory = loggerFactory;
-        _logger = _loggerFactory.CreateLogger<VeryTunnelServer>();
-        InternalLoggerFactory.DefaultFactory = _loggerFactory;
+        InternalLoggerFactory.DefaultFactory = loggerFactory;
+        _logger = InternalLoggerFactory.DefaultFactory.CreateLogger<VeryTunnelServer>();
     }
 
     public event Func<IAgent, Task> OnAgentConnected;
@@ -36,7 +36,7 @@ public class VeryTunnelServer : ITunnelServer
         return OnAgentConnected?.Invoke(agent) ?? Task.CompletedTask; ;
     }
     public bool TryGet(string Id, out IAgent agent) => _agentManager.TryGet(Id, out agent);
-    public IList<IAgent> Agents => throw new NotImplementedException();
+    public IEnumerable<IAgent> Agents => _agentManager.Agents;
 
     public async Task StartAsync()
     {
@@ -51,7 +51,7 @@ public class VeryTunnelServer : ITunnelServer
             .ChildOption(ChannelOption.SoReuseaddr, true)
             .Option(ChannelOption.SoReuseport, true)
             .Option(ChannelOption.SoBacklog, 1000)
-            //.Handler(new LoggingHandler("SRV-LSTN", LogLevel.INFO))
+            .Handler(new LoggingHandler("SRV-LSTN", LogLevel.INFO))
             .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
             {
                 channel.Pipeline.AddLast(new ProtobufVarint32FrameDecoder());
