@@ -2,9 +2,7 @@
 using DotNetty.Transport.Channels;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
-using System.Buffers;
 using System.Collections.Concurrent;
-using VeryTunnel.Contracts;
 using VeryTunnel.DotNetty;
 using VeryTunnel.Models;
 
@@ -15,7 +13,7 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
     private readonly ILogger<AgentMessageHandler> _logger = InternalLoggerFactory.DefaultFactory.CreateLogger<AgentMessageHandler>();
     private string _agentId = string.Empty;
     public string Id => _agentId;
-    private readonly ConcurrentDictionary<(int agentPort, int serverPoint, uint sessionId), TunnelSession> _tunnelSessions = new();
+    private readonly ConcurrentDictionary<(int agentPort, int serverPoint, uint sessionId), Lazy<TunnelSession>> _tunnelSessions = new();
     private readonly ConcurrentDictionary<uint, (ChannelMessage request, TaskCompletionSource<IMessage> responseTask)> _messageDic = new();
     private uint requestId = 0;
     private uint NextRequestID => Interlocked.Increment(ref requestId);
@@ -34,6 +32,9 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
         });
     }
 
+
+    int num = 0;
+    int num1 = 0;
     public async Task OnLocalBytesReceived(int agentPort, int serverPoint, uint sessionId, byte[] bytes)
     {
         var m = new ChannelMessage
@@ -46,13 +47,24 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
                 Data = ByteString.CopyFrom(bytes)
             }
         };
-        _logger.LogInformation($"发送 {m}");
+        //_logger.LogInformation($"local 端口发送数据 {num++}");
         await _context.WriteAndFlushAsync(m);
+    }
+
+    private Lazy<TunnelSession> CreateTunnelSession((int agentPort, int serverPort, uint sessionId) param)
+    {
+        return new Lazy<TunnelSession>(() =>
+        {
+            var tunnelSession = new TunnelSession(param.agentPort, param.serverPort, param.sessionId, this);
+            tunnelSession.Start();
+            //_logger.LogInformation($"TunnelSession Started {param.agentPort}, {param.serverPort}, {param.sessionId}");
+            return tunnelSession;
+        }, LazyThreadSafetyMode.ExecutionAndPublication);
     }
 
     protected override void ChannelRead0(IChannelHandlerContext ctx, ChannelMessage msg)
     {
-        _logger.LogInformation($"ChannelRead0 {msg.Message}");
+        //_logger.LogInformation($"ChannelRead0 {msg.Message}");
         switch (msg.Message)
         {
             case OperateTunnelSession message:
@@ -64,18 +76,16 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
                         {
                             case OperateTunnelSession.Types.Command.Create:
                                 {
-                                    var tunnelSession = new TunnelSession(message.AgentPort, message.ServerPort, message.SessionId, this);
-                                    _tunnelSessions.TryAdd((message.AgentPort, message.ServerPort, message.SessionId), tunnelSession);
-                                    _logger.LogInformation($"TunnelSession Created {message.AgentPort}, {message.ServerPort}, {message.SessionId}");
-                                    await tunnelSession.StartAsync();
+                                    //_logger.LogInformation($"OperateTunnelSession");
+                                    var tunnelSession = _tunnelSessions.GetOrAdd((message.AgentPort, message.ServerPort, message.SessionId), CreateTunnelSession);
                                     break;
                                 }
                             case OperateTunnelSession.Types.Command.Close:
                                 {
                                     if (_tunnelSessions.TryRemove((message.AgentPort, message.ServerPort, message.SessionId), out var tunnelSession))
                                     {
-                                        await tunnelSession.Close();
-                                        _logger.LogInformation($"TunnelSession Closed {message.AgentPort}, {message.ServerPort}, {message.SessionId}");
+                                        await tunnelSession.Value.Close();
+                                        //_logger.LogInformation($"TunnelSession Closed {message.AgentPort}, {message.ServerPort}, {message.SessionId}");
                                     }
                                     break;
                                 }
@@ -86,15 +96,16 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
                 }
             case TunnelPackage message:
                 {
-                    if (_tunnelSessions.TryGetValue((message.AgentPort, message.ServerPort, message.SessionId), out var tunnelSession))
+                    //_logger.LogInformation($"TunnelPackage");
+                    var tunnelSession = _tunnelSessions.GetOrAdd((message.AgentPort, message.ServerPort, message.SessionId), CreateTunnelSession);
+                    //_logger.LogInformation($"TunnelPackage _tunnelSessions.GetOrAdd");
+                    Task.Run(async () =>
                     {
-                        Task.Run(async () =>
-                        {
-                            var bytes = new byte[message.Data.Length];
-                            message.Data.CopyTo(bytes, 0);
-                            await tunnelSession.WriteBytesToLocal(bytes);
-                        });
-                    }
+                        var bytes = new byte[message.Data.Length];
+                        message.Data.CopyTo(bytes, 0);
+                        //_logger.LogInformation($"Local 端口接受数据 {num1++}");
+                        await tunnelSession.Value.WriteBytesToLocal(bytes);
+                    });
                     break;
                 }
             default:

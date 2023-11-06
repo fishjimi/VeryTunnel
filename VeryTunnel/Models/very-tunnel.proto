@@ -37,4 +37,5 @@ message TunnelPackage{
     int32 server_port = 2;
     uint32 session_id = 3;
     bytes data = 4;
+    uint32 package_num = 5;
 }

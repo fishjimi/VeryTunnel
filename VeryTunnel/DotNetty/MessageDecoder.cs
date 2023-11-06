@@ -25,7 +25,8 @@ public class MessageDecoder : ByteToMessageDecoder
 
     protected override void Decode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
     {
-        _logger.LogInformation(ByteBufferUtil.PrettyHexDump(input));
+        //_logger.LogInformation(ByteBufferUtil.PrettyHexDump(input));
+
 
         byte[] bytes = new byte[input.ReadableBytes];
         input.ReadBytes(bytes);
@@ -36,6 +37,7 @@ public class MessageDecoder : ByteToMessageDecoder
             ResponseId = wrappedMessage.ResponseId,
             Message = GetInnerMessage(wrappedMessage),
         };
+
         output.Add(channelMessage);
     }
 

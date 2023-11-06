@@ -2,7 +2,6 @@
 using DotNetty.Transport.Channels;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
-using System.Buffers;
 using System.Collections.Concurrent;
 using VeryTunnel.Contracts;
 using VeryTunnel.DotNetty;
@@ -32,7 +31,7 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
     private IChannelHandlerContext _context;
     protected override void ChannelRead0(IChannelHandlerContext ctx, ChannelMessage msg)
     {
-        _logger.LogInformation($"ChannelRead0 {msg.Message}");
+        //_logger.LogInformation($"ChannelRead0 {msg.Message.GetType()}");
         switch (msg.Message)
         {
             case DeviceConnect message:
@@ -79,7 +78,13 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
 
     public override void ChannelInactive(IChannelHandlerContext context)
     {
-        _agentManager.Remove(_agentId);
+        if (_agentManager.TryRemove(_agentId, out var agent))
+        {
+            foreach (var tunnel in agent.Tunnels)
+            {
+                tunnel.Close();
+            }
+        }
     }
 
 
@@ -114,7 +119,7 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
 
     internal async Task OnTunnelSessionCreated(int agentPort, int serverPort, uint sessionId)
     {
-        _logger.LogInformation($"OnTunnelSessionCreated {agentPort} {serverPort} {sessionId}");
+        //_logger.LogInformation($"OnTunnelSessionCreated {agentPort} {serverPort} {sessionId}");
         await SendAndReceiveAsync(new OperateTunnelSession
         {
             AgentPort = agentPort,
@@ -124,6 +129,7 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
         });
     }
 
+    int num = 0;
     internal async Task OnTunnelSessionBytesReceived(int agentPort, int serverPort, uint sessionId, byte[] bytes)
     {
         var m = new TunnelPackage
@@ -133,12 +139,13 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
             SessionId = sessionId,
             Data = ByteString.CopyFrom(bytes)
         };
-        _logger.LogInformation($"监听收到 {m}");
+
+        //_logger.LogInformation($"Server 端口发送数据 {num++}");
         await SendAsync(m);
     }
     internal async Task OnTunnelSessionClose(int agentPort, int serverPort, uint sessionId)
     {
-        _logger.LogInformation($"OnTunnelSessionClose {agentPort} {serverPort} {sessionId}");
+        //_logger.LogInformation($"OnTunnelSessionClose {agentPort} {serverPort} {sessionId}");
         await SendAndReceiveAsync(new OperateTunnelSession
         {
             AgentPort = agentPort,
@@ -153,6 +160,7 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
         var tunnel = new Tunnel(agentPort, serverPort, this);
         serverPort = await tunnel.StartTunnel();
         _tunnels.TryAdd((agentPort, serverPort), tunnel);
+        tunnel.OnClosed += (t) => _tunnels.TryRemove((agentPort, serverPort), out _);
         return tunnel;
     }
 }

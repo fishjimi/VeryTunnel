@@ -1,4 +1,5 @@
 ﻿@page "/"
+@using VeryTunnel.Contracts;
 @inject ITunnelServer tunnelServer
 
 <PageTitle>Counter</PageTitle>
@@ -31,6 +32,7 @@
                                 <tr>
                                     <th>AgentPort</th>
                                     <th>ServerPort</th>
+                                    <th>SessionCount</th>
                                     <th>Operations</th>
                                 </tr>
                             </thead>
@@ -40,8 +42,9 @@
                                     <tr>
                                         <td>@tunnel.AgentPort</td>
                                         <td>@tunnel.ServerPort</td>
+                                        <td>@tunnel.Sessions.Count()</td>
                                         <td>
-                                            <button class="btn btn-danger" @onclick="tunnel.Close">Close</button>
+                                            <button class="btn btn-danger" @onclick="()=>CloseTunnel(tunnel)">Close</button>
                                         </td>
                                     </tr>
                                 }
@@ -56,7 +59,11 @@
 
 @code {
 
-    private void CreateNewTunnel()
+    private void CloseTunnel(ITunnel tunnel)
     {
+        tunnel.Close().ConfigureAwait(false).GetAwaiter().OnCompleted(() =>
+        {
+            InvokeAsync(StateHasChanged);
+        });
     }
 }

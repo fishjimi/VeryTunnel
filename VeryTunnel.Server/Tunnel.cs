@@ -1,6 +1,8 @@
-﻿using DotNetty.Transport.Bootstrapping;
+﻿using DotNetty.Common.Internal.Logging;
+using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
+using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Net;
 using VeryTunnel.Contracts;
@@ -9,6 +11,8 @@ namespace VeryTunnel.Server;
 
 internal class Tunnel : ITunnel
 {
+    public event Action<ITunnel> OnClosed;
+
     private readonly int _agentPort;
     private int _serverPort;
     private readonly AgentMessageHandler _agent;
@@ -17,6 +21,7 @@ internal class Tunnel : ITunnel
     private MultithreadEventLoopGroup bossGroup;
     private MultithreadEventLoopGroup workerGroup;
     private ServerBootstrap bootstrap;
+    private readonly ILogger<Tunnel> _logger = InternalLoggerFactory.DefaultFactory.CreateLogger<Tunnel>();
 
     public Tunnel(int agentPort, int serverPort, AgentMessageHandler agent)
     {
@@ -75,13 +80,14 @@ internal class Tunnel : ITunnel
                {
                    channel.CloseCompletion.ContinueWith(async t =>
                    {
+                       //_logger.LogInformation($"连接关闭 sessionId {sessionId} CloseCompletion");
                        _sessions.TryRemove(sessionId, out _);
                        await _agent.OnTunnelSessionClose(_agentPort, _serverPort, sessionId);
                    });
                }
            }));
         boundChannel = await bootstrap.BindAsync(_serverPort);
-        _ = boundChannel.CloseCompletion.ContinueWith(_ => CloseAllSessions());
+        _ = boundChannel.CloseCompletion.ContinueWith(_ => AfterClose());
         //_logger.LogInformation("TunnelServer started");
         _serverPort = (boundChannel.LocalAddress as IPEndPoint).Port;
         return _serverPort;
@@ -97,8 +103,10 @@ internal class Tunnel : ITunnel
         //_logger.LogInformation("TunnelServer stopped");
     }
 
-    private async Task CloseAllSessions()
+    private async Task AfterClose()
     {
+        OnClosed?.Invoke(this);
+        //CloseAllSessions
         foreach (var session in _sessions)
         {
             await session.Value.Close();

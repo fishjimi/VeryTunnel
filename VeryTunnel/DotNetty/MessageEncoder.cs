@@ -45,6 +45,6 @@ public class MessageEncoder : MessageToByteEncoder<ChannelMessage>
         output.WriteBytes(bytes);
 
 
-        _logger.LogInformation(ByteBufferUtil.PrettyHexDump(output));
+        //_logger.LogInformation(ByteBufferUtil.PrettyHexDump(output));
     }
 }

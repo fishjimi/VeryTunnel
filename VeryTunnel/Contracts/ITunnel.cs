@@ -6,4 +6,5 @@ public interface ITunnel
     public int ServerPort { get; }
     public IEnumerable<ITunnelSession> Sessions { get; }
     public Task Close();
+    public event Action<ITunnel> OnClosed;
 }
