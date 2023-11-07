@@ -7,4 +7,6 @@ public interface ITunnel
     public IEnumerable<ITunnelSession> Sessions { get; }
     public Task Close();
     public event Action<ITunnel> OnClosed;
+    public event Action<ITunnelSession> OnSessionCreated;
+    public event Action<ITunnelSession> OnSessionClosed;
 }

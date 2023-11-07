@@ -19,7 +19,7 @@
                 <td>@agent.Id</td>
                 <td></td>
                 <td>
-                    <button class="btn btn-primary" @onclick="()=> agent.CreateTunnel(80,0)">Create New Tunnel</button>
+                    <button class="btn btn-primary" @onclick="()=>CreateTunnel(agent)">Create New Tunnel</button>
                 </td>
             </tr>
             if (true)
@@ -58,6 +58,27 @@
 </table>
 
 @code {
+
+    private void RegisterTunnelEvents(ITunnel tunnel)
+    {
+        tunnel.OnSessionCreated += (a) => InvokeAsync(StateHasChanged);
+        tunnel.OnSessionClosed += (a) => InvokeAsync(StateHasChanged);
+    }
+
+    protected override void OnInitialized()
+    {
+        tunnelServer.OnAgentConnected += (agent) => InvokeAsync(StateHasChanged);
+        tunnelServer.OnAgentDisConnected += (agent) => InvokeAsync(StateHasChanged);
+        foreach (var agent in tunnelServer.Agents)
+            foreach (var tunnel in agent.Tunnels)
+                RegisterTunnelEvents(tunnel);
+    }
+
+    private async Task CreateTunnel(IAgent agent)
+    {
+        var tunnel = await agent.CreateTunnel(80, 0);
+        RegisterTunnelEvents(tunnel);
+    }
 
     private void CloseTunnel(ITunnel tunnel)
     {

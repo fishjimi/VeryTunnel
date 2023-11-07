@@ -14,6 +14,8 @@ namespace VeryTunnel.Client
     {
         private readonly ILogger<VeryTunnelClient> _logger;
 
+        public event Func<Task> OnClosed;
+
         private IChannel clientChannel;
         private readonly MultithreadEventLoopGroup group = new();
         private readonly Bootstrap bootstrap = new();
@@ -22,10 +24,7 @@ namespace VeryTunnel.Client
         {
             InternalLoggerFactory.DefaultFactory = loggerFactory;
             _logger = InternalLoggerFactory.DefaultFactory.CreateLogger<VeryTunnelClient>();
-        }
 
-        public async Task StartAsync()
-        {
             bootstrap
                 .Group(group)
                 .Channel<TcpSocketChannel>()
@@ -40,8 +39,13 @@ namespace VeryTunnel.Client
                     channel.Pipeline.AddLast(new HeartBeatReadIdleHandler(30));
                     channel.Pipeline.AddLast(new AgentMessageHandler());
                 }));
+        }
 
-            clientChannel = await bootstrap.ConnectAsync("127.0.0.1", 2000);
+        public async Task StartAsync()
+        {
+
+            clientChannel = await bootstrap.ConnectAsync("127.0.0.1", 2000).ConfigureAwait(false);
+            _ = clientChannel.CloseCompletion.ContinueWith(t => OnClosed?.Invoke() ?? Task.CompletedTask);
 
             _logger.LogInformation("TunnelClient started");
         }

@@ -14,6 +14,14 @@ namespace VeryTunnel.Client.Sample
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             await _client.StartAsync();
+            _client.OnClosed += async () =>
+            {
+                Console.WriteLine("Reconnect After 1 second");
+                await Task.Delay(1000);
+                //这里会卡死，要处理一下自动重连
+                await _client.StartAsync();
+                int a = 0;
+            };
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)

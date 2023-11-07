@@ -16,7 +16,7 @@ namespace VeryTunnel.Client
         public int ServerPort => _serverPort;
         public uint SessionId { get; }
 
-        private readonly SemaphoreSlim _semaphore = new(1);
+        //private readonly SemaphoreSlim _semaphore = new(1);
 
 
         private readonly ILogger<TunnelSession> _logger;
@@ -52,6 +52,7 @@ namespace VeryTunnel.Client
             {
                 await foreach (var bytes in _upStream.Reader.ReadAllAsync())
                 {
+                    Console.WriteLine($"Local 发送 {bytes.Length}");
                     await _agent.OnLocalBytesReceived(AgentPort, _serverPort, SessionId, bytes);
                 }
             });
@@ -91,15 +92,36 @@ namespace VeryTunnel.Client
             await _downStream.Writer.WriteAsync(bytes);
         }
 
-        public override void ChannelRead(IChannelHandlerContext context, object message)
+        //public override void ChannelRead(IChannelHandlerContext context, object message)
+        //{
+        //    //Task.Run(async () =>
+        //    //{
+        //    IByteBuffer buf = message as IByteBuffer;
+        //    var bytes = new byte[buf.ReadableBytes];
+        //    buf.ReadBytes(bytes);
+        //    _upStream.Writer.WriteAsync(bytes).AsTask().Wait();
+        //    buf.Release();
+        //    //});
+        //}
+
+        public override async void ChannelRead(IChannelHandlerContext context, object message)
         {
-            //Task.Run(async () =>
+            //try
             //{
+            //    await _semaphore.WaitAsync();
             IByteBuffer buf = message as IByteBuffer;
             var bytes = new byte[buf.ReadableBytes];
+            //Console.WriteLine($"Local port 收到 {bytes.Length}");
             buf.ReadBytes(bytes);
-            _upStream.Writer.WriteAsync(bytes).AsTask().Wait();
+            await _upStream.Writer.WriteAsync(bytes);
             buf.Release();
+            //}
+            //finally
+            //{
+            //    _semaphore.Release();
+            //}
+            //Task.Run(async () =>
+            //{
             //});
         }
     }

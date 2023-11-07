@@ -31,10 +31,11 @@ public class VeryTunnelServer : ITunnelServer
     }
 
     public event Func<IAgent, Task> OnAgentConnected;
-    private Task TrigerOnAgentConnected(IAgent agent)
-    {
-        return OnAgentConnected?.Invoke(agent) ?? Task.CompletedTask; ;
-    }
+    private Task TrigerOnAgentConnected(IAgent agent) => OnAgentConnected?.Invoke(agent) ?? Task.CompletedTask;
+
+    public event Func<IAgent, Task> OnAgentDisConnected;
+    private Task TrigerOnAgentDisConnected(IAgent agent) => OnAgentDisConnected?.Invoke(agent) ?? Task.CompletedTask;
+
     public bool TryGet(string Id, out IAgent agent) => _agentManager.TryGet(Id, out agent);
     public IEnumerable<IAgent> Agents => _agentManager.Agents;
 
@@ -59,7 +60,7 @@ public class VeryTunnelServer : ITunnelServer
                 channel.Pipeline.AddLast(new MessageDecoder());
                 channel.Pipeline.AddLast(new MessageEncoder());
                 channel.Pipeline.AddLast(new HeartBeatReadIdleHandler(40));
-                channel.Pipeline.AddLast(new AgentMessageHandler(_agentManager, TrigerOnAgentConnected));
+                channel.Pipeline.AddLast(new AgentMessageHandler(_agentManager, TrigerOnAgentConnected, TrigerOnAgentDisConnected));
             }));
         boundChannel = await bootstrap.BindAsync(2000);
         _logger.LogInformation("TunnelServer started");

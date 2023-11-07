@@ -14,6 +14,7 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
     private readonly ILogger<AgentMessageHandler> _logger = InternalLoggerFactory.DefaultFactory.CreateLogger<AgentMessageHandler>();
     private readonly IAgentManager _agentManager;
     private readonly Func<IAgent, Task> _trigerOnAgentConnected;
+    private readonly Func<IAgent, Task> _trigerOnAgentDisConnected;
     private string _agentId = string.Empty;
     public string Id => _agentId;
     private readonly ConcurrentDictionary<(int agentPort, int serverPoint), Tunnel> _tunnels = new();
@@ -22,14 +23,15 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
     private uint requestId = 0;
     private uint NextRequestID => Interlocked.Increment(ref requestId);
 
-    public AgentMessageHandler(IAgentManager agentManager, Func<IAgent, Task> trigerOnAgentConnected)
+    public AgentMessageHandler(IAgentManager agentManager, Func<IAgent, Task> trigerOnAgentConnected, Func<IAgent, Task> trigerOnAgentDisConnected)
     {
         _agentManager = agentManager;
         _trigerOnAgentConnected = trigerOnAgentConnected;
+        _trigerOnAgentDisConnected = trigerOnAgentDisConnected;
     }
 
     private IChannelHandlerContext _context;
-    protected override void ChannelRead0(IChannelHandlerContext ctx, ChannelMessage msg)
+    protected override async void ChannelRead0(IChannelHandlerContext ctx, ChannelMessage msg)
     {
         //_logger.LogInformation($"ChannelRead0 {msg.Message.GetType()}");
         switch (msg.Message)
@@ -43,19 +45,19 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
                 }
             case HeartBeat message:
                 {
-                    ctx.Channel.WriteAndFlushAsync(message);
+                    await ctx.Channel.WriteAndFlushAsync(msg);
                     break;
                 }
             case TunnelPackage message:
                 {
                     if (_tunnels.TryGetValue((message.AgentPort, message.ServerPort), out var tunnel))
                     {
-                        Task.Run(async () =>
-                        {
-                            var bytes = new byte[message.Data.Length];
-                            message.Data.CopyTo(bytes, 0);
-                            await tunnel.WriteBytesToSession(message.SessionId, bytes);
-                        });
+                        //Task.Run(async () =>
+                        //{
+                        var bytes = new byte[message.Data.Length];
+                        message.Data.CopyTo(bytes, 0);
+                        await tunnel.WriteBytesToSession(message.SessionId, bytes);
+                        //});
                     }
                     break;
                 }
@@ -85,6 +87,7 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
                 tunnel.Close();
             }
         }
+        _trigerOnAgentDisConnected?.Invoke(this);
     }
 
 
@@ -117,7 +120,7 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
     }
 
 
-    internal async Task OnTunnelSessionCreated(int agentPort, int serverPort, uint sessionId)
+    internal async Task RequestAgentCreateSession(int agentPort, int serverPort, uint sessionId)
     {
         //_logger.LogInformation($"OnTunnelSessionCreated {agentPort} {serverPort} {sessionId}");
         await SendAndReceiveAsync(new OperateTunnelSession
@@ -130,7 +133,7 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
     }
 
     int num = 0;
-    internal async Task OnTunnelSessionBytesReceived(int agentPort, int serverPort, uint sessionId, byte[] bytes)
+    internal async Task SendBytesToAgent(int agentPort, int serverPort, uint sessionId, byte[] bytes)
     {
         var m = new TunnelPackage
         {

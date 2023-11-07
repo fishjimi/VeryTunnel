@@ -1,10 +1,12 @@
-﻿using DotNetty.Common.Internal.Logging;
+﻿using DotNetty.Buffers;
+using DotNetty.Common.Internal.Logging;
 using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Net;
+using System.Threading;
 using VeryTunnel.Contracts;
 
 namespace VeryTunnel.Server;
@@ -12,6 +14,8 @@ namespace VeryTunnel.Server;
 internal class Tunnel : ITunnel
 {
     public event Action<ITunnel> OnClosed;
+    public event Action<ITunnelSession> OnSessionCreated;
+    public event Action<ITunnelSession> OnSessionClosed;
 
     private readonly int _agentPort;
     private int _serverPort;
@@ -40,20 +44,30 @@ internal class Tunnel : ITunnel
     private uint NextSessionId => Interlocked.Increment(ref _sessionId);
 
 
-    internal async Task OnSessionCreated(uint sessionId)
+    internal async Task RequestAgentCreateSession(uint sessionId)
     {
-        await _agent.OnTunnelSessionCreated(_agentPort, _serverPort, sessionId);
+        await _agent.RequestAgentCreateSession(_agentPort, _serverPort, sessionId);
     }
-    internal async Task OnSessionBytesReceived(uint sessionId, byte[] bytes)
+    internal async Task SendBytesToAgent(uint sessionId, byte[] bytes)
     {
-        await _agent.OnTunnelSessionBytesReceived(_agentPort, _serverPort, sessionId, bytes);
+        await _agent.SendBytesToAgent(_agentPort, _serverPort, sessionId, bytes);
     }
+    internal void TrigerOnSessionCreated(ITunnelSession session) => OnSessionCreated?.Invoke(session);
 
+    private readonly SemaphoreSlim _semaphore = new(1);
     internal async Task WriteBytesToSession(uint sessionId, byte[] bytes)
     {
-        if (_sessions.TryGetValue(sessionId, out var session))
+        try
         {
-            await session.WriteBytes(bytes);
+            await _semaphore.WaitAsync();
+            if (_sessions.TryGetValue(sessionId, out var session))
+            {
+                await session.WriteBytes(bytes);
+            }
+        }
+        finally
+        {
+            _semaphore.Release();
         }
     }
 
@@ -80,8 +94,9 @@ internal class Tunnel : ITunnel
                {
                    channel.CloseCompletion.ContinueWith(async t =>
                    {
-                       //_logger.LogInformation($"连接关闭 sessionId {sessionId} CloseCompletion");
+                       _logger.LogInformation($"连接关闭 sessionId {sessionId} CloseCompletion");
                        _sessions.TryRemove(sessionId, out _);
+                       OnSessionClosed?.Invoke(session);
                        await _agent.OnTunnelSessionClose(_agentPort, _serverPort, sessionId);
                    });
                }
@@ -98,8 +113,8 @@ internal class Tunnel : ITunnel
         //CloseCompletion 如果耗时，下面这句话会很快结束吗?
         await (boundChannel?.CloseAsync() ?? Task.CompletedTask);
         await Task.WhenAll(
-            bossGroup?.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)) ?? Task.CompletedTask,
-            workerGroup?.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)) ?? Task.CompletedTask);
+            bossGroup?.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100)) ?? Task.CompletedTask,
+            workerGroup?.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100)) ?? Task.CompletedTask);
         //_logger.LogInformation("TunnelServer stopped");
     }
 

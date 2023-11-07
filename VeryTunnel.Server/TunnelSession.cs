@@ -27,14 +27,15 @@ internal class TunnelSession : ChannelHandlerAdapter, ITunnelSession
     public override void ChannelActive(IChannelHandlerContext context)
     {
         _context = context;
+        _tunnel.TrigerOnSessionCreated(this);
         Task.Run(async () =>
         {
-            await _tunnel.OnSessionCreated(_sessionId);
+            await _tunnel.RequestAgentCreateSession(_sessionId);
             await foreach (var bytes in _downStream.Reader.ReadAllAsync())
             {
                 IByteBuffer buf = Unpooled.Buffer();
                 buf.WriteBytes(bytes);
-                await _tunnel.OnSessionBytesReceived(_sessionId, bytes);
+                await _tunnel.SendBytesToAgent(_sessionId, bytes);
             }
         });
         Task.Run(async () =>
@@ -42,6 +43,7 @@ internal class TunnelSession : ChannelHandlerAdapter, ITunnelSession
             await foreach (var bytes in _upStream.Reader.ReadAllAsync())
             {
                 IByteBuffer buf = Unpooled.WrappedBuffer(bytes);
+                Console.WriteLine($"_upStream 吐出 {bytes.Length}");
                 await _context.Channel.WriteAndFlushAsync(buf);
             }
         });
@@ -55,19 +57,35 @@ internal class TunnelSession : ChannelHandlerAdapter, ITunnelSession
     }
 
 
-    public override void ChannelRead(IChannelHandlerContext context, object message)
+    //private readonly SemaphoreSlim _semaphore = new(1);
+    public override async void ChannelRead(IChannelHandlerContext context, object message)
     {
-        Task.Run(async () =>
+        //Task.Run(async () =>
+        //{
+        //    IByteBuffer buf = message as IByteBuffer;
+        //    var bytes = new byte[buf.ReadableBytes];
+        //    buf.ReadBytes(bytes);
+        //    await _downStream.Writer.WriteAsync(bytes);
+        //});
+        try
         {
+            //await _semaphore.WaitAsync();
+
             IByteBuffer buf = message as IByteBuffer;
             var bytes = new byte[buf.ReadableBytes];
             buf.ReadBytes(bytes);
             await _downStream.Writer.WriteAsync(bytes);
-        });
+            buf.Release();
+        }
+        finally
+        {
+            //_semaphore.Release();
+        }
     }
 
     public async Task WriteBytes(byte[] bytes)
     {
+        //Console.WriteLine($"_upStream 准备写入 {bytes.Length}");
         await _upStream.Writer.WriteAsync(bytes);
     }
 

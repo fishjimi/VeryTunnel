@@ -7,6 +7,7 @@ public interface ITunnelServer
     public Task StartAsync();
     public Task StopAsync();
     public event Func<IAgent, Task> OnAgentConnected;
+    public event Func<IAgent, Task> OnAgentDisConnected;
     public bool TryGet(string Id, out IAgent agent);
     public IEnumerable<IAgent> Agents { get; }
 }
