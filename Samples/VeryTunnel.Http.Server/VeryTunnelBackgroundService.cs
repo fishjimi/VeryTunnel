@@ -17,6 +17,5 @@ public class VeryTunnelBackgroundService : BackgroundService
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
         await _server.StopAsync();
-        await base.StopAsync(cancellationToken);
     }
 }

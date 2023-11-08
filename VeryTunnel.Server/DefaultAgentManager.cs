@@ -14,7 +14,11 @@ internal class DefaultAgentManager : IAgentManager
 
     public bool TryRemove(string agentId, out IAgent agent)
     {
+#if NET472 || NETSTANDARD2_0
+        return _agents.TryRemove(agentId, out agent);
+#else
         return _agents.Remove(agentId, out agent);
+#endif
     }
 
     public bool TryGet(string Id, out IAgent agent)
@@ -22,5 +26,4 @@ internal class DefaultAgentManager : IAgentManager
         return _agents.TryGetValue(Id, out agent);
     }
     public IEnumerable<IAgent> Agents => _agents.Values;
-
 }

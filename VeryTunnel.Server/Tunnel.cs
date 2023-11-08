@@ -1,12 +1,10 @@
-﻿using DotNetty.Buffers;
-using DotNetty.Common.Internal.Logging;
+﻿using DotNetty.Common.Internal.Logging;
 using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Net;
-using System.Threading;
 using VeryTunnel.Contracts;
 
 namespace VeryTunnel.Server;
@@ -40,8 +38,14 @@ internal class Tunnel : ITunnel
     private ConcurrentDictionary<uint, TunnelSession> _sessions = new();
     public IEnumerable<ITunnelSession> Sessions => _sessions.Values;
 
+
+#if NET472 || NETSTANDARD2_0
+    private int _sessionId;
+    private uint NextSessionId => unchecked((uint)Interlocked.Increment(ref _sessionId));
+#else
     private uint _sessionId;
     private uint NextSessionId => Interlocked.Increment(ref _sessionId);
+#endif
 
 
     internal async Task RequestAgentCreateSession(uint sessionId)
@@ -121,7 +125,6 @@ internal class Tunnel : ITunnel
     private async Task AfterClose()
     {
         OnClosed?.Invoke(this);
-        //CloseAllSessions
         foreach (var session in _sessions)
         {
             await session.Value.Close();

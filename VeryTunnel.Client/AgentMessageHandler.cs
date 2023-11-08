@@ -15,8 +15,6 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
     public string Id => _agentId;
     private readonly ConcurrentDictionary<(int agentPort, int serverPoint, uint sessionId), Lazy<TunnelSession>> _tunnelSessions = new();
     private readonly ConcurrentDictionary<uint, (ChannelMessage request, TaskCompletionSource<IMessage> responseTask)> _messageDic = new();
-    private uint requestId = 0;
-    private uint NextRequestID => Interlocked.Increment(ref requestId);
 
 
     private IChannelHandlerContext _context;
@@ -32,9 +30,6 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
         });
     }
 
-
-    int num = 0;
-    int num1 = 0;
     public async Task OnLocalBytesReceived(int agentPort, int serverPoint, uint sessionId, byte[] bytes)
     {
         var m = new ChannelMessage
@@ -47,7 +42,6 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
                 Data = ByteString.CopyFrom(bytes)
             }
         };
-        //_logger.LogInformation($"local 端口发送数据 {num++}");
         await _context.WriteAndFlushAsync(m);
     }
 
@@ -57,55 +51,42 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
         {
             var tunnelSession = new TunnelSession(param.agentPort, param.serverPort, param.sessionId, this);
             tunnelSession.Start();
-            //_logger.LogInformation($"TunnelSession Started {param.agentPort}, {param.serverPort}, {param.sessionId}");
             return tunnelSession;
         }, LazyThreadSafetyMode.ExecutionAndPublication);
     }
 
-    protected override void ChannelRead0(IChannelHandlerContext ctx, ChannelMessage msg)
+    protected override async void ChannelRead0(IChannelHandlerContext ctx, ChannelMessage msg)
     {
-        //_logger.LogInformation($"ChannelRead0 {msg.Message}");
         switch (msg.Message)
         {
             case OperateTunnelSession message:
                 {
                     msg.ResponseId = msg.RequestId;
-                    Task.Run(async () =>
+                    switch (message.Command)
                     {
-                        switch (message.Command)
-                        {
-                            case OperateTunnelSession.Types.Command.Create:
+                        case OperateTunnelSession.Types.Command.Create:
+                            {
+                                var tunnelSession = _tunnelSessions.GetOrAdd((message.AgentPort, message.ServerPort, message.SessionId), CreateTunnelSession);
+                                break;
+                            }
+                        case OperateTunnelSession.Types.Command.Close:
+                            {
+                                if (_tunnelSessions.TryRemove((message.AgentPort, message.ServerPort, message.SessionId), out var tunnelSession))
                                 {
-                                    //_logger.LogInformation($"OperateTunnelSession");
-                                    var tunnelSession = _tunnelSessions.GetOrAdd((message.AgentPort, message.ServerPort, message.SessionId), CreateTunnelSession);
-                                    break;
+                                    await tunnelSession.Value.Close();
                                 }
-                            case OperateTunnelSession.Types.Command.Close:
-                                {
-                                    if (_tunnelSessions.TryRemove((message.AgentPort, message.ServerPort, message.SessionId), out var tunnelSession))
-                                    {
-                                        await tunnelSession.Value.Close();
-                                        //_logger.LogInformation($"TunnelSession Closed {message.AgentPort}, {message.ServerPort}, {message.SessionId}");
-                                    }
-                                    break;
-                                }
-                        }
-                        await ctx.Channel.WriteAndFlushAsync(msg);
-                    });
+                                break;
+                            }
+                    }
+                    await ctx.Channel.WriteAndFlushAsync(msg);
                     break;
                 }
             case TunnelPackage message:
                 {
-                    //_logger.LogInformation($"TunnelPackage");
                     var tunnelSession = _tunnelSessions.GetOrAdd((message.AgentPort, message.ServerPort, message.SessionId), CreateTunnelSession);
-                    //_logger.LogInformation($"TunnelPackage _tunnelSessions.GetOrAdd");
-                    Task.Run(async () =>
-                    {
-                        var bytes = new byte[message.Data.Length];
-                        message.Data.CopyTo(bytes, 0);
-                        //_logger.LogInformation($"Local 端口接受数据 {num1++}");
-                        await tunnelSession.Value.WriteBytesToLocal(bytes);
-                    });
+                    var bytes = new byte[message.Data.Length];
+                    message.Data.CopyTo(bytes, 0);
+                    await tunnelSession.Value.WriteBytesToLocal(bytes);
                     break;
                 }
             default:

@@ -20,7 +20,6 @@ namespace VeryTunnel.Client.Sample
                 await Task.Delay(1000);
                 //这里会卡死，要处理一下自动重连
                 await _client.StartAsync();
-                int a = 0;
             };
         }
 

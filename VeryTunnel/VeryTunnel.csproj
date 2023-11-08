@@ -1,25 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <!--<Nullable>enable</Nullable>-->
-	    
-	<!--<GeneratePackageOnBuild>true</GeneratePackageOnBuild>-->
+    <TargetFrameworks>netstandard2.0;net472;net6.0;net7.0</TargetFrameworks>
+	<ImplicitUsings>enable</ImplicitUsings>
+	  
+	<LangVersion>latest</LangVersion>
 	<PackageId>VeryTunnel</PackageId>
     <Version>0.0.0-test.0</Version>
     <Authors>Jimifish</Authors>
     <Company>Jimifish</Company>
     <Product>VeryTunnel</Product>
-	<PackageTags>Tunnel;NAT;Proxy</PackageTags>
-    <Description>
-      This library enables establishing custom tunnels at any ports
-    </Description>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
+	<PackageTags>tunnel;nat;proxy;socket;tcp</PackageTags>
+    <Description>This library enables establishing custom tunnels at any ports</Description>
 	<RepositoryType>git</RepositoryType>
 	<PackageProjectUrl>https://github.com/fishjimi/VeryTunnel</PackageProjectUrl>
 	<RepositoryUrl>https://github.com/fishjimi/VeryTunnel</RepositoryUrl>
-	<Copyright>Copyright (c) Jimifish $([System.DateTime]::Now.Year)</Copyright>
-	  
+	<Copyright>Copyright (c) 2023 Jimifish</Copyright>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<RequireLicenseAcceptance>true</RequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
@@ -34,6 +33,7 @@
 
   <ItemGroup>
     <Protobuf Include="Models\*.proto" ProtoRoot="Models" />
+	<None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 	
 </Project>

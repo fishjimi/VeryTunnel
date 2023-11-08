@@ -18,6 +18,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "解决方案项", "解决方案项", "{68FF3483-83C6-42D9-9856-6A462B2A1EB0}"
 	ProjectSection(SolutionItems) = preProject
 		build.cake = build.cake
+		README.md = README.md
 	EndProjectSection
 EndProject
 Global

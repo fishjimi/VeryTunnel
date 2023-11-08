@@ -2,6 +2,6 @@
 
 public interface ITunnelSession
 {
-    public uint SessionId { get; }
-    public Task Close();
+    uint SessionId { get; }
+    Task Close();
 }

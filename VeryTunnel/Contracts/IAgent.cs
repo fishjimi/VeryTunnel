@@ -2,7 +2,8 @@
 
 public interface IAgent
 {
-    public string Id { get; }
-    public Task<ITunnel> CreateTunnel(int agentPort, int serverPort);
-    public IEnumerable<ITunnel> Tunnels { get; }
+    string Id { get; }
+    Task<ITunnel> CreateTunnel(int agentPort, int serverPort);
+    IEnumerable<ITunnel> Tunnels { get; }
 }
+

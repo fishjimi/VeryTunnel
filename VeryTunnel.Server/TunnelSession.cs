@@ -28,31 +28,58 @@ internal class TunnelSession : ChannelHandlerAdapter, ITunnelSession
     {
         _context = context;
         _tunnel.TrigerOnSessionCreated(this);
+
+#if NET472 || NETSTANDARD2_0
         Task.Run(async () =>
         {
             await _tunnel.RequestAgentCreateSession(_sessionId);
-            await foreach (var bytes in _downStream.Reader.ReadAllAsync())
+            while (await _downStream.Reader.WaitToReadAsync())
             {
-                IByteBuffer buf = Unpooled.Buffer();
-                buf.WriteBytes(bytes);
-                await _tunnel.SendBytesToAgent(_sessionId, bytes);
+                while (_upStream.Reader.TryRead(out var bytes))
+                {
+                    IByteBuffer buf = Unpooled.Buffer();
+                    buf.WriteBytes(bytes);
+                    await _tunnel.SendBytesToAgent(_sessionId, bytes);
+                }
             }
         });
+        Task.Run(async () =>
+        {
+            while (await _upStream.Reader.WaitToReadAsync())
+            {
+                while (_upStream.Reader.TryRead(out var bytes))
+                {
+                    IByteBuffer buf = Unpooled.WrappedBuffer(bytes);
+                    await _context.Channel.WriteAndFlushAsync(buf);
+                }
+            }
+        });
+#else
+        Task.Run(async () =>
+            {
+                await _tunnel.RequestAgentCreateSession(_sessionId);
+                await foreach (var bytes in _downStream.Reader.ReadAllAsync())
+                {
+                    IByteBuffer buf = Unpooled.Buffer();
+                    buf.WriteBytes(bytes);
+                    await _tunnel.SendBytesToAgent(_sessionId, bytes);
+                }
+            });
         Task.Run(async () =>
         {
             await foreach (var bytes in _upStream.Reader.ReadAllAsync())
             {
                 IByteBuffer buf = Unpooled.WrappedBuffer(bytes);
-                Console.WriteLine($"_upStream 吐出 {bytes.Length}");
                 await _context.Channel.WriteAndFlushAsync(buf);
             }
         });
+#endif
+
     }
 
     public override void ChannelInactive(IChannelHandlerContext context)
     {
         _downStream.Writer.TryComplete();
-        //_logger.LogInformation($"连接关闭 sessionId {SessionId} ChannelInactive");
 
     }
 
@@ -60,32 +87,15 @@ internal class TunnelSession : ChannelHandlerAdapter, ITunnelSession
     //private readonly SemaphoreSlim _semaphore = new(1);
     public override async void ChannelRead(IChannelHandlerContext context, object message)
     {
-        //Task.Run(async () =>
-        //{
-        //    IByteBuffer buf = message as IByteBuffer;
-        //    var bytes = new byte[buf.ReadableBytes];
-        //    buf.ReadBytes(bytes);
-        //    await _downStream.Writer.WriteAsync(bytes);
-        //});
-        try
-        {
-            //await _semaphore.WaitAsync();
-
-            IByteBuffer buf = message as IByteBuffer;
-            var bytes = new byte[buf.ReadableBytes];
-            buf.ReadBytes(bytes);
-            await _downStream.Writer.WriteAsync(bytes);
-            buf.Release();
-        }
-        finally
-        {
-            //_semaphore.Release();
-        }
+        IByteBuffer buf = message as IByteBuffer;
+        var bytes = new byte[buf.ReadableBytes];
+        buf.ReadBytes(bytes);
+        await _downStream.Writer.WriteAsync(bytes);
+        buf.Release();
     }
 
     public async Task WriteBytes(byte[] bytes)
     {
-        //Console.WriteLine($"_upStream 准备写入 {bytes.Length}");
         await _upStream.Writer.WriteAsync(bytes);
     }
 

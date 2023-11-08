@@ -1,13 +1,12 @@
 var target = Argument("target", "Package-Nuget");
 
 // Directories
-var nuget = Directory("tools");
 var output = Directory("build");
 var outputNuGet = output + Directory("nuget");
 
 var version = "0.0.0-test.0";
+var copyright = $"Copyright (c) {System.DateTime.Now.Year} Jimifish";
 var configuration = "Release";
-var source = "";
 
 Task("Clean")
 .Does(() =>
@@ -27,6 +26,7 @@ Task("Update-Version")
     foreach (var csProjectFile in csProjectFiles)
     {
         XmlPoke(csProjectFile, "//PropertyGroup/Version", version);
+        XmlPoke(csProjectFile, "//PropertyGroup/Copyright", copyright);
     }
 });
 
@@ -42,11 +42,10 @@ Task("Package-Nuget")
         var setting = new DotNetPackSettings
         {
             Configuration = configuration,
-            OutputDirectory = outputNuGet
+            OutputDirectory = outputNuGet,
         };
         DotNetPack(csProjectFile.FullPath, setting);
     }
-
 });
 
 RunTarget(target);

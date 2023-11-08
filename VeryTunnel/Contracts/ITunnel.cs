@@ -2,11 +2,11 @@
 
 public interface ITunnel
 {
-    public int AgentPort { get; }
-    public int ServerPort { get; }
-    public IEnumerable<ITunnelSession> Sessions { get; }
-    public Task Close();
-    public event Action<ITunnel> OnClosed;
-    public event Action<ITunnelSession> OnSessionCreated;
-    public event Action<ITunnelSession> OnSessionClosed;
+    int AgentPort { get; }
+    int ServerPort { get; }
+    IEnumerable<ITunnelSession> Sessions { get; }
+    Task Close();
+    event Action<ITunnel> OnClosed;
+    event Action<ITunnelSession> OnSessionCreated;
+    event Action<ITunnelSession> OnSessionClosed;
 }

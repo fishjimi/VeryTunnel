@@ -20,8 +20,14 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
     private readonly ConcurrentDictionary<(int agentPort, int serverPoint), Tunnel> _tunnels = new();
     public IEnumerable<ITunnel> Tunnels => _tunnels.Values;
     private readonly ConcurrentDictionary<uint, (ChannelMessage request, TaskCompletionSource<IMessage> responseTask)> _messageDic = new();
+
+#if NET472 || NETSTANDARD2_0
+    private int requestId = 0;
+    private uint NextRequestID => unchecked((uint)Interlocked.Increment(ref requestId));
+#else
     private uint requestId = 0;
     private uint NextRequestID => Interlocked.Increment(ref requestId);
+#endif
 
     public AgentMessageHandler(IAgentManager agentManager, Func<IAgent, Task> trigerOnAgentConnected, Func<IAgent, Task> trigerOnAgentDisConnected)
     {
@@ -33,7 +39,6 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
     private IChannelHandlerContext _context;
     protected override async void ChannelRead0(IChannelHandlerContext ctx, ChannelMessage msg)
     {
-        //_logger.LogInformation($"ChannelRead0 {msg.Message.GetType()}");
         switch (msg.Message)
         {
             case DeviceConnect message:
@@ -52,12 +57,9 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
                 {
                     if (_tunnels.TryGetValue((message.AgentPort, message.ServerPort), out var tunnel))
                     {
-                        //Task.Run(async () =>
-                        //{
                         var bytes = new byte[message.Data.Length];
                         message.Data.CopyTo(bytes, 0);
                         await tunnel.WriteBytesToSession(message.SessionId, bytes);
-                        //});
                     }
                     break;
                 }
@@ -105,12 +107,22 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
             await _context.Channel.WriteAndFlushAsync(request);
             try
             {
+#if NET472 || NETSTANDARD2_0
+                if (await Task.WhenAny(tcs.Task, Task.Delay(TimeSpan.FromSeconds(5))) == tcs.Task)
+                    return await tcs.Task;
+                throw new TimeoutException("The operation has timed out.");
+#else
                 var response = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(5));
                 return response;
+#endif
             }
             finally
             {
+#if NET472 || NETSTANDARD2_0
+                _messageDic.TryRemove(request.RequestId, out _);
+#else
                 _messageDic.Remove(request.RequestId, out _);
+#endif
             }
         }
         else
@@ -122,7 +134,6 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
 
     internal async Task RequestAgentCreateSession(int agentPort, int serverPort, uint sessionId)
     {
-        //_logger.LogInformation($"OnTunnelSessionCreated {agentPort} {serverPort} {sessionId}");
         await SendAndReceiveAsync(new OperateTunnelSession
         {
             AgentPort = agentPort,
@@ -132,7 +143,6 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
         });
     }
 
-    int num = 0;
     internal async Task SendBytesToAgent(int agentPort, int serverPort, uint sessionId, byte[] bytes)
     {
         var m = new TunnelPackage
@@ -143,12 +153,10 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
             Data = ByteString.CopyFrom(bytes)
         };
 
-        //_logger.LogInformation($"Server 端口发送数据 {num++}");
         await SendAsync(m);
     }
     internal async Task OnTunnelSessionClose(int agentPort, int serverPort, uint sessionId)
     {
-        //_logger.LogInformation($"OnTunnelSessionClose {agentPort} {serverPort} {sessionId}");
         await SendAndReceiveAsync(new OperateTunnelSession
         {
             AgentPort = agentPort,
