@@ -5,7 +5,6 @@
 	<ImplicitUsings>enable</ImplicitUsings>
 	<LangVersion>latest</LangVersion>
 	<PackageId>VeryTunnel.Client</PackageId>
-    <Version>0.0.0-test.0</Version>
     <Authors>Jimifish</Authors>
     <Company>Jimifish</Company>
     <Product>VeryTunnel</Product>
@@ -15,7 +14,7 @@
 	<RepositoryType>git</RepositoryType>
 	<PackageProjectUrl>https://github.com/fishjimi/VeryTunnel</PackageProjectUrl>
 	<RepositoryUrl>https://github.com/fishjimi/VeryTunnel</RepositoryUrl>
-	<Copyright>Copyright (c) 2023 Jimifish</Copyright>
+	<Copyright>Copyright (c) $([System.DateTime]::Now.Year) Jimifish</Copyright>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<RequireLicenseAcceptance>true</RequireLicenseAcceptance>
   </PropertyGroup>

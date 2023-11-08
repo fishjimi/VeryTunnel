@@ -4,8 +4,9 @@ var target = Argument("target", "Package-Nuget");
 var output = Directory("build");
 var outputNuGet = output + Directory("nuget");
 
-var version = "0.0.0-test.0";
-var copyright = $"Copyright (c) {System.DateTime.Now.Year} Jimifish";
+var version = "1.0.0";
+var versionPostfix = "";
+var revision = DateTime.Now.ToString("HHmm");
 var configuration = "Release";
 
 Task("Clean")
@@ -19,20 +20,8 @@ Task("Clean")
     CleanDirectories("./**/obj/" + configuration);
 });
 
-Task("Update-Version")
-.Does(() =>
-{
-    var csProjectFiles = GetFiles("./VeryTunnel*/*.csproj");
-    foreach (var csProjectFile in csProjectFiles)
-    {
-        XmlPoke(csProjectFile, "//PropertyGroup/Version", version);
-        XmlPoke(csProjectFile, "//PropertyGroup/Copyright", copyright);
-    }
-});
-
 
 Task("Package-Nuget")
-.IsDependentOn("Update-Version")
 .IsDependentOn("Clean")
 .Does(() =>
 {
@@ -43,6 +32,11 @@ Task("Package-Nuget")
         {
             Configuration = configuration,
             OutputDirectory = outputNuGet,
+            MSBuildSettings = new DotNetMSBuildSettings()
+            .SetVersion($"{version}{versionPostfix}")
+            .SetAssemblyVersion($"{version}.{revision}")
+            .SetFileVersion($"{version}.{revision}")
+
         };
         DotNetPack(csProjectFile.FullPath, setting);
     }
