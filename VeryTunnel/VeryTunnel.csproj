@@ -4,6 +4,22 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <!--<Nullable>enable</Nullable>-->
+	    
+	<!--<GeneratePackageOnBuild>true</GeneratePackageOnBuild>-->
+	<PackageId>VeryTunnel</PackageId>
+    <Version>0.0.0-test.0</Version>
+    <Authors>Jimifish</Authors>
+    <Company>Jimifish</Company>
+    <Product>VeryTunnel</Product>
+	<PackageTags>Tunnel;NAT;Proxy</PackageTags>
+    <Description>
+      This library enables establishing custom tunnels at any ports
+    </Description>
+	<RepositoryType>git</RepositoryType>
+	<PackageProjectUrl>https://github.com/fishjimi/VeryTunnel</PackageProjectUrl>
+	<RepositoryUrl>https://github.com/fishjimi/VeryTunnel</RepositoryUrl>
+	<Copyright>Copyright (c) Jimifish $([System.DateTime]::Now.Year)</Copyright>
+	  
   </PropertyGroup>
 
   <ItemGroup>

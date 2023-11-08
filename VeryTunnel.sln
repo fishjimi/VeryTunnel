@@ -11,9 +11,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{55B3
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VeryTunnel.Http.Server", "Samples\VeryTunnel.Http.Server\VeryTunnel.Http.Server.csproj", "{D4232998-C7B2-4A61-A715-12659CFB4589}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VeryTunnel.Client", "VeryTunnel.Client\VeryTunnel.Client.csproj", "{ACE158C3-2443-47BE-B23D-3A4070FD2B81}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VeryTunnel.Client", "VeryTunnel.Client\VeryTunnel.Client.csproj", "{ACE158C3-2443-47BE-B23D-3A4070FD2B81}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VeryTunnel.Client.Sample", "Samples\VeryTunnel.Client.Sample\VeryTunnel.Client.Sample.csproj", "{D6007FD5-CEA7-4466-BE8A-FD95477DB4E4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VeryTunnel.Client.Sample", "Samples\VeryTunnel.Client.Sample\VeryTunnel.Client.Sample.csproj", "{D6007FD5-CEA7-4466-BE8A-FD95477DB4E4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "解决方案项", "解决方案项", "{68FF3483-83C6-42D9-9856-6A462B2A1EB0}"
+	ProjectSection(SolutionItems) = preProject
+		build.cake = build.cake
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
