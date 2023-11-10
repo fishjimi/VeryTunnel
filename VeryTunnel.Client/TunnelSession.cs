@@ -85,7 +85,7 @@ internal class TunnelSession : ChannelHandlerAdapter, ITunnelSession
         _upStream.Writer.TryComplete();
     }
 
-    public void Start()
+    public async Task Start()
     {
         bootstrap
             .Group(group)
@@ -96,7 +96,7 @@ internal class TunnelSession : ChannelHandlerAdapter, ITunnelSession
                 channel.Pipeline.AddLast(this);
             }));
 
-        clientChannel = bootstrap.ConnectAsync("127.0.0.1", AgentPort).ConfigureAwait(false).GetAwaiter().GetResult();
+        clientChannel = await bootstrap.ConnectAsync("127.0.0.1", AgentPort);
     }
 
     public async Task Close()

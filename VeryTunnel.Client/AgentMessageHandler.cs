@@ -13,7 +13,7 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
     private readonly ILogger<AgentMessageHandler> _logger = InternalLoggerFactory.DefaultFactory.CreateLogger<AgentMessageHandler>();
     private string _agentId = string.Empty;
     public string Id => _agentId;
-    private readonly ConcurrentDictionary<(int agentPort, int serverPoint, uint sessionId), Lazy<TunnelSession>> _tunnelSessions = new();
+    private readonly ConcurrentDictionary<(int agentPort, int serverPoint, uint sessionId), Lazy<Task<TunnelSession>>> _tunnelSessions = new();
     private readonly ConcurrentDictionary<uint, (ChannelMessage request, TaskCompletionSource<IMessage> responseTask)> _messageDic = new();
 
 
@@ -45,12 +45,12 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
         await _context.WriteAndFlushAsync(m);
     }
 
-    private Lazy<TunnelSession> CreateTunnelSession((int agentPort, int serverPort, uint sessionId) param)
+    private Lazy<Task<TunnelSession>> CreateTunnelSession((int agentPort, int serverPort, uint sessionId) param)
     {
-        return new Lazy<TunnelSession>(() =>
+        return new Lazy<Task<TunnelSession>>(async () =>
         {
             var tunnelSession = new TunnelSession(param.agentPort, param.serverPort, param.sessionId, this);
-            tunnelSession.Start();
+            await tunnelSession.Start();
             return tunnelSession;
         }, LazyThreadSafetyMode.ExecutionAndPublication);
     }
@@ -66,14 +66,14 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
                     {
                         case OperateTunnelSession.Types.Command.Create:
                             {
-                                var tunnelSession = _tunnelSessions.GetOrAdd((message.AgentPort, message.ServerPort, message.SessionId), CreateTunnelSession);
+                                var tunnelSession = await _tunnelSessions.GetOrAdd((message.AgentPort, message.ServerPort, message.SessionId), CreateTunnelSession).Value;
                                 break;
                             }
                         case OperateTunnelSession.Types.Command.Close:
                             {
                                 if (_tunnelSessions.TryRemove((message.AgentPort, message.ServerPort, message.SessionId), out var tunnelSession))
                                 {
-                                    await tunnelSession.Value.Close();
+                                    await (await tunnelSession.Value).Close();
                                 }
                                 break;
                             }
@@ -83,10 +83,10 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
                 }
             case TunnelPackage message:
                 {
-                    var tunnelSession = _tunnelSessions.GetOrAdd((message.AgentPort, message.ServerPort, message.SessionId), CreateTunnelSession);
+                    var tunnelSession = await _tunnelSessions.GetOrAdd((message.AgentPort, message.ServerPort, message.SessionId), CreateTunnelSession).Value;
                     var bytes = new byte[message.Data.Length];
                     message.Data.CopyTo(bytes, 0);
-                    await tunnelSession.Value.WriteBytesToLocal(bytes);
+                    await tunnelSession.WriteBytesToLocal(bytes);
                     break;
                 }
             default:
