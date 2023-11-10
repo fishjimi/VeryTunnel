@@ -5,6 +5,7 @@
 	<ImplicitUsings>enable</ImplicitUsings>
 	<LangVersion>latest</LangVersion>
 	<PackageId>VeryTunnel</PackageId>
+	<PackageIcon>icon.png</PackageIcon>
     <Authors>Jimifish</Authors>
     <Company>Jimifish</Company>
     <Product>VeryTunnel</Product>
@@ -32,6 +33,7 @@
   <ItemGroup>
     <Protobuf Include="Models\*.proto" ProtoRoot="Models" />
 	<None Include="..\README.md" Pack="true" PackagePath="\" />
+	<None Include="..\icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 	
 </Project>
