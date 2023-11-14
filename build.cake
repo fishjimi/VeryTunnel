@@ -5,7 +5,7 @@ var output = Directory("build");
 var outputNuGet = output + Directory("nuget");
 
 var version = "1.0.0";
-var versionPostfix = "";
+var versionPostfix = "-beta.1";
 var revision = DateTime.Now.ToString("HHmm");
 var configuration = "Release";
 
