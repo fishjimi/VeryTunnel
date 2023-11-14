@@ -15,8 +15,8 @@
     <tbody>
         @foreach (var agent in tunnelServer.Agents)
         {
-            <tr @key="agent.Id">
-                <td>@agent.Id</td>
+            <tr @key="agent.AgentName">
+                <td>@agent.AgentName</td>
                 <td></td>
                 <td>
                     <button class="btn btn-primary" @onclick="()=>CreateTunnel(agent)">Create New Tunnel</button>
@@ -24,7 +24,7 @@
             </tr>
             if (true)
             {
-                var key = $"{agent.Id}-tunnels";
+                var key = $"{agent.AgentName}-tunnels";
                 <tr @key="key">
                     <td colspan="3">
                         <table class="table">
@@ -76,6 +76,7 @@
 
     private async Task CreateTunnel(IAgent agent)
     {
+        //Specify agentport and serverport here
         var tunnel = await agent.CreateTunnel(80, 0);
         RegisterTunnelEvents(tunnel);
     }

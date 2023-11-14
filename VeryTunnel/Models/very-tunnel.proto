@@ -17,7 +17,7 @@ message HeartBeat{
 }
 
 message DeviceConnect{
-    string id = 1;
+    string agent_name = 1;
     string user_context = 2;
 }
 

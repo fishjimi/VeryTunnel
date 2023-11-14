@@ -5,6 +5,7 @@ using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using VeryTunnel.Contracts;
 using VeryTunnel.DotNetty;
 using LogLevel = DotNetty.Handlers.Logging.LogLevel;
@@ -15,6 +16,7 @@ public class VeryTunnelServer : ITunnelServer
 {
     private readonly IAgentManager _agentManager;
     private readonly ILogger<VeryTunnelServer> _logger;
+    private readonly IOptions<VeryTunnelServerOptions> _options;
 
 
     private IChannel boundChannel;
@@ -23,11 +25,12 @@ public class VeryTunnelServer : ITunnelServer
     private ServerBootstrap bootstrap;
 
 
-    public VeryTunnelServer(IAgentManager agentManager, ILoggerFactory loggerFactory)
+    public VeryTunnelServer(IAgentManager agentManager, IOptions<VeryTunnelServerOptions> options, ILoggerFactory loggerFactory)
     {
         _agentManager = agentManager;
         InternalLoggerFactory.DefaultFactory = loggerFactory;
         _logger = InternalLoggerFactory.DefaultFactory.CreateLogger<VeryTunnelServer>();
+        _options = options;
     }
 
     public event Func<IAgent, Task> OnAgentConnected;
@@ -62,7 +65,7 @@ public class VeryTunnelServer : ITunnelServer
                 channel.Pipeline.AddLast(new HeartBeatReadIdleHandler(40));
                 channel.Pipeline.AddLast(new AgentMessageHandler(_agentManager, TrigerOnAgentConnected, TrigerOnAgentDisConnected));
             }));
-        boundChannel = await bootstrap.BindAsync(2000);
+        boundChannel = await bootstrap.BindAsync(_options.Value.ServerPort);
         _logger.LogInformation("TunnelServer started");
     }
 

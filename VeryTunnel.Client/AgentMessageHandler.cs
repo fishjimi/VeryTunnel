@@ -11,10 +11,14 @@ namespace VeryTunnel.Client;
 internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
 {
     private readonly ILogger<AgentMessageHandler> _logger = InternalLoggerFactory.DefaultFactory.CreateLogger<AgentMessageHandler>();
-    private string _agentId = string.Empty;
-    public string Id => _agentId;
     private readonly ConcurrentDictionary<(int agentPort, int serverPoint, uint sessionId), Lazy<Task<TunnelSession>>> _tunnelSessions = new();
     private readonly ConcurrentDictionary<uint, (ChannelMessage request, TaskCompletionSource<IMessage> responseTask)> _messageDic = new();
+    public string AgentName { get; }
+
+    public AgentMessageHandler(string agentName)
+    {
+        AgentName = agentName;
+    }
 
 
     private IChannelHandlerContext _context;
@@ -25,7 +29,7 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
         {
             Message = new DeviceConnect
             {
-                Id = Environment.MachineName
+                AgentName = AgentName
             }
         });
     }
@@ -97,6 +101,14 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
                     }
                     break;
                 }
+        }
+    }
+
+    public override async void ChannelInactive(IChannelHandlerContext context)
+    {
+        foreach (var tunnelSession in _tunnelSessions)
+        {
+            await (await tunnelSession.Value.Value).Close();
         }
     }
 }

@@ -102,7 +102,7 @@ internal class TunnelSession : ChannelHandlerAdapter, ITunnelSession
     public async Task Close()
     {
         await (clientChannel?.CloseAsync() ?? Task.CompletedTask);
-        await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
+        await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100));
     }
 
 

@@ -15,8 +15,8 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
     private readonly IAgentManager _agentManager;
     private readonly Func<IAgent, Task> _trigerOnAgentConnected;
     private readonly Func<IAgent, Task> _trigerOnAgentDisConnected;
-    private string _agentId = string.Empty;
-    public string Id => _agentId;
+    private string _agentName = string.Empty;
+    public string AgentName => _agentName;
     private readonly ConcurrentDictionary<(int agentPort, int serverPoint), Tunnel> _tunnels = new();
     public IEnumerable<ITunnel> Tunnels => _tunnels.Values;
     private readonly ConcurrentDictionary<uint, (ChannelMessage request, TaskCompletionSource<IMessage> responseTask)> _messageDic = new();
@@ -43,7 +43,7 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
         {
             case DeviceConnect message:
                 {
-                    _agentId = message.Id;
+                    _agentName = message.AgentName;
                     _agentManager.Add(this);
                     _trigerOnAgentConnected?.Invoke(this);
                     break;
@@ -82,7 +82,7 @@ internal class AgentMessageHandler : SimpleChannelInboundHandler<ChannelMessage>
 
     public override void ChannelInactive(IChannelHandlerContext context)
     {
-        if (_agentManager.TryRemove(_agentId, out var agent))
+        if (_agentManager.TryRemove(_agentName, out var agent))
         {
             foreach (var tunnel in agent.Tunnels)
             {

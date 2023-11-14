@@ -9,7 +9,7 @@ internal class DefaultAgentManager : IAgentManager
 
     public void Add(IAgent agent)
     {
-        _agents.AddOrUpdate(agent.Id, agent, (agentId, oldAgent) => agent);
+        _agents.AddOrUpdate(agent.AgentName, agent, (agentId, oldAgent) => agent);
     }
 
     public bool TryRemove(string agentId, out IAgent agent)

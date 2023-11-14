@@ -2,7 +2,7 @@
 
 public interface IAgent
 {
-    string Id { get; }
+    string AgentName { get; }
     Task<ITunnel> CreateTunnel(int agentPort, int serverPort);
     IEnumerable<ITunnel> Tunnels { get; }
 }

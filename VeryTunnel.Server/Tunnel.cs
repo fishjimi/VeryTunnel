@@ -98,7 +98,7 @@ internal class Tunnel : ITunnel
                {
                    channel.CloseCompletion.ContinueWith(async t =>
                    {
-                       _logger.LogInformation($"连接关闭 sessionId {sessionId} CloseCompletion");
+                       //_logger.LogInformation($"连接关闭 sessionId {sessionId} CloseCompletion");
                        _sessions.TryRemove(sessionId, out _);
                        OnSessionClosed?.Invoke(session);
                        await _agent.OnTunnelSessionClose(_agentPort, _serverPort, sessionId);
@@ -107,7 +107,7 @@ internal class Tunnel : ITunnel
            }));
         boundChannel = await bootstrap.BindAsync(_serverPort);
         _ = boundChannel.CloseCompletion.ContinueWith(_ => AfterClose());
-        //_logger.LogInformation("TunnelServer started");
+        _logger.LogInformation("TunnelServer started");
         _serverPort = (boundChannel.LocalAddress as IPEndPoint).Port;
         return _serverPort;
     }
@@ -119,7 +119,7 @@ internal class Tunnel : ITunnel
         await Task.WhenAll(
             bossGroup?.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100)) ?? Task.CompletedTask,
             workerGroup?.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100)) ?? Task.CompletedTask);
-        //_logger.LogInformation("TunnelServer stopped");
+        _logger.LogInformation("TunnelServer stopped");
     }
 
     private async Task AfterClose()
